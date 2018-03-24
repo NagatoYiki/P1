@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        *{margin:0; padding:0;}
+        body{background: #000;}
+        .wrap{margin:30px auto; border:10px solid #fff; width:400px; height:600px;}
+        .box{position:relative; width:400px; height:600px;}
+        .box h3{text-align:center; color:#fff; margin:30px auto; margin-bottom: 100px; font-size: 30px;}
+        .box p{margin:40px auto; text-align:center; line-height: 40px; width:200px; height:40px; font-size: 20px; border:1px solid #fff; color:#fff; cursor:pointer;}
+        .box img{position: absolute;}
+        .box .oSpan{position:absolute; color:#fff; font-size: 18px; top:0; left:0; font-weight:bold;}
+        .box .gg{position:absolute; top:0; bottom:0; top:0; left:0; right:0; margin:auto; width:300px; height:500px; background: #fff; text-align:center;}
+        .box .gg h4{ margin-top:20px; font-size:35px; color:#f60; }
+        .box .gg span{display:block; margin-top:20px; font-size:25px; color:#000;}
+        .box .gg div{ display:inline-block; margin-top: 200px; border:1px solid #000; text-align:center; font-size: 20px; padding:10px; cursor:pointer; color:#ccc; background: #f60;}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="box"></div>
+    </div>
+    <script>
+        var oBox = document.getElementsByClassName('box')[0],
+            arr = ['超简单','不要太简单','很简单','简单','挂壁模式'],
+            timer1,timer2;
+
+
+        Hpage();
+        function Hpage(){
+            oBox.innerHTML = '';
+            var title = document.createElement('h3');
+                title.innerHTML = '打灰机v1.0';
+                oBox.appendChild(title);
+            for(var i=0; i<5; i++){
+                var difficulty = document.createElement('p');
+                    difficulty.innerHTML = arr[i];
+                    difficulty.index = i;
+                    difficulty.onclick = function(e){
+                            start(e,this.index);
+                    }
+                    if(i == arr.length-1){
+                        difficulty.style.background = 'skyblue';
+                        difficulty.style.color = '#f60';
+                    }
+                    oBox.appendChild(difficulty);
+            }
+        }
+
+        function start(e,index){
+            oBox.innerHTML = '';
+            var obj = aircraft(e);
+            generate(index,obj);
+            score();
+        }
+
+        function generate(index,obj){
+            var arr = [200,100,60,20,12];
+            timer2 = setInterval(function(){
+                var enemy = new Image();
+                    enemy.src = 'images/enemy.png';
+                    enemy.width = 23;
+                    enemy.height = 30;
+                    enemy.style.top = 0;
+                    enemy.style.left = Math.random()*oBox.clientWidth - enemy.width/2 + "px";
+                var speed = Math.random()*2+3;
+                    oBox.appendChild(enemy);
+                    enemySpeed();
+                function enemySpeed(){
+                    enemy.style.top = enemy.offsetTop + speed + 'px';
+                    if(enemy.offsetTop >= oBox.clientHeight - enemy.height){
+                        oBox.removeChild(enemy);
+                    }else{
+                        var Biu = document.getElementsByClassName('biu');
+                        for(var i=0; i<Biu.length; i++){
+                            if(isCollision(Biu[i],enemy)){
+                                cancelAnimationFrame(Biu[i].timer);
+                                oBox.removeChild(Biu[i]);
+                                Boom(enemy,'')
+                                oBox.removeChild(enemy);
+                                document.getElementsByClassName('oSpan')[0].innerHTML =
+                                oBox.score += 1;
+                            }
+                        }
+                        if( obj.parentNode&&(isCollision(obj,enemy)) ){
+                            clearInterval(timer1);
+                            clearInterval(timer2);
+                            Boom(obj,'2');
+                            Boom(enemy,'');
+                            oBox.removeChild(obj);
+                            oBox.removeChild(enemy);
+                        }
+                    }
+                    
+                    obj.parentNode&&requestAnimationFrame(enemySpeed);
+                }
+            },arr[index])
+        }
+
+        function aircraft(e){
+            var e = e || window.event;
+            var craft = new Image();
+                craft.src = 'images/plane.png';
+                craft.width = 60;
+                craft.height = 36;
+                craft.style.top = e.pageY - pageOffset(oBox).top - craft.height/2 + 'px';
+                craft.style.left = e.pageX - pageOffset(oBox).left - craft.width/2 + 'px';
+                oBox.appendChild(craft);
+            var maxTop = oBox.clientHeight - craft.height,
+                maxLeft = oBox.clientWidth - craft.width/2,
+                minLeft = 0-craft.width/2;
+
+            document.onmousemove = function (e){
+                var top = e.pageY - pageOffset(oBox).top - craft.height/2,
+                    left = e.pageX - pageOffset(oBox).left - craft.width/2;
+                top = Math.max(0,top);
+                top = Math.min(top,maxTop);
+                left = Math.max(minLeft,left);
+                left = Math.min(left,maxLeft);
+                craft.style.top = top + 'px';
+                craft.style.left = left + 'px';
+            }
+            timer1 = setInterval(function(){
+                var Biu = new Image();
+                    Biu.className = 'biu';
+                    Biu.src = 'images/bullet.png';
+                    Biu.width = 6;
+                    Biu.height = 22;
+                    Biu.style.top = craft.offsetTop - Biu.height/2 + 'px';
+                    Biu.style.left = craft.offsetLeft + craft.width/2 - Biu.width/2 + 'px';
+                    oBox.appendChild(Biu);
+                    biuSpeed();
+                    function biuSpeed(){
+                        Biu.style.top = Biu.offsetTop - 8 + 'px';
+                        if(Biu.offsetTop <= 0){
+                            oBox.removeChild(Biu);
+                        }else{
+                            Biu.timer = requestAnimationFrame(biuSpeed);
+                        }
+                    }
+            },100)
+            return craft;
+        }
+        
+        function score(){
+            oBox.score = 0;
+            var oSpan = document.createElement('span');
+            oSpan.className = 'oSpan';
+            oSpan.innerHTML = oBox.score;
+            oBox.appendChild(oSpan);
+        }
+        
+        function gameOver(){
+            oBox.innerHTML = '';
+            var box = document.createElement('div');
+            box.className = 'gg';
+            var h3 = document.createElement('h4');
+            h3.innerHTML = 'Game Over';
+            var span = document.createElement('span');
+            span.innerHTML = "分数：" + oBox.score;
+            var btn = document.createElement('div');
+            btn.innerHTML = '再来一局';
+            btn.onclick = function(){
+                Hpage();
+            }
+            oBox.appendChild(box);
+            box.appendChild(h3);
+            box.appendChild(span);
+            box.appendChild(btn);
+        }
+
+        function Boom(obj,num){
+            var boom = new Image();
+                boom.src = 'images/boom'+num+'.png';
+                boom.style.width = obj.style.width;
+                boom.style.hegiht = obj.style.hegiht;
+                boom.style.top = obj.offsetTop + 'px';
+                boom.style.left = obj.offsetLeft + 'px';
+                oBox.appendChild(boom);
+            setTimeout(function(){
+                oBox.removeChild(boom);
+                if(num == 2){
+                    gameOver();
+                }
+            },num?800:100)
+        }
+
+        function isCollision(obj,enemy){
+            var top1 = obj.offsetTop,
+                left1 = obj.offsetLeft,
+                right1 = left1 + obj.width,
+                bottom1 = top1 + obj.height,
+                top2 = enemy.offsetTop,
+                left2 = enemy.offsetLeft,
+                right2 = left2 + enemy.width,
+                bottom2 = top2 + enemy.height;
+
+            return !(top1 > bottom2 || bottom1 < top2 || left1 > right2 || right1 < left2)
+        }
+
+        function pageOffset(obj){
+            var json = {
+                top : 0,
+                left : 0
+            }
+            while(obj !== document.body){
+                json.top += obj.offsetTop;
+                json.left += obj.offsetLeft;
+                obj = obj.offsetParent;
+            }
+            return json;
+        }
+    </script>
+</body>
+</html>
